@@ -4,11 +4,16 @@ import time
 from project_config import config
 
 def run_script(script_name):
-    """Run a Python script using subprocess."""
+    """Run a Python script using subprocess and return created files."""
     result = subprocess.run(['python', script_name], capture_output=True, text=True)
     print(result.stdout)
     if result.stderr:
         print("Errors:", result.stderr)
+    
+    # Assuming the script produces specific files, return those file paths
+    # Modify this according to what each script generates
+    created_files = config.get('output_files', {}).get(script_name, [])
+    return created_files
 
 def delete_files_after_timeout(file_paths, timeout=180):
     """Delete files after a timeout (in seconds)."""
@@ -23,16 +28,19 @@ def delete_files_after_timeout(file_paths, timeout=180):
             print(f"File not found: {file_path}")
 
 def main():
-    # Retrieve the list of scripts and files to delete from the config file
+    # Retrieve the list of scripts from the config file
     scripts = config['scripts']
-    files_to_delete = config['files_to_delete']  # List of files to delete after 3 minutes
+
+    # List to hold all created files
+    all_created_files = []
 
     for script in scripts:
         print(f"Running {script}...")
-        run_script(script)
+        created_files = run_script(script)
+        all_created_files.extend(created_files)
 
     # Delete files after 3 minutes (180 seconds)
-    delete_files_after_timeout(files_to_delete, timeout=180)
+    delete_files_after_timeout(all_created_files, timeout=180)
 
 if __name__ == "__main__":
     main()
